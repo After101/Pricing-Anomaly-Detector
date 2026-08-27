@@ -1,12 +1,15 @@
 """
-Pricing Anomaly Detector  Streamlit UI.
+Pricing Anomaly Detector -- Streamlit UI.
 
-This file is for presentation only. It never trains, retrains, or re-derives
+This file is PRESENTATION ONLY. It never trains, retrains, or re-derives
 any scoring logic. All inference goes through the existing, already-trained
 pipeline:
 
     ml.predict.predict_product(product_data) -> structured result dict
 
+Run from the project root with:
+
+    streamlit run app.py
 """
 
 from __future__ import annotations
@@ -24,9 +27,9 @@ import streamlit as st
 from ml import config
 from ml.predict import predict_product, InvalidProductInputError, ArtifactsNotFoundError
 
-
+# ---------------------------------------------------------------------------
 # Page setup
-
+# ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="Pricing Anomaly Detector",
     page_icon="\U0001F4CA",
@@ -43,9 +46,9 @@ KNOWN_SUBCATEGORIES = ["Wireless Earphones / TWS", "Headphones", "Earphones"]
 PLATFORMS = ["Amazon", "Flipkart", "Other"]
 
 
-
+# ---------------------------------------------------------------------------
 # Cached loaders (read-only access to existing artifacts -- no training)
-
+# ---------------------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def load_product_history() -> dict:
     if not config.PRODUCT_HISTORY_PATH.exists():
@@ -73,9 +76,9 @@ def artifacts_available() -> bool:
     return all(p.exists() for p in required)
 
 
-
+# ---------------------------------------------------------------------------
 # Safe wrapper around predict_product -- the ONLY place errors are caught
-
+# ---------------------------------------------------------------------------
 def run_prediction(product_data: dict):
     """Returns (result_dict, error_message) -- exactly one is None."""
     try:
@@ -89,10 +92,9 @@ def run_prediction(product_data: dict):
         return None, "Something went wrong while analyzing this product. Please check your inputs and try again."
 
 
-
+# ---------------------------------------------------------------------------
 # Amazon URL handling (scraper intentionally decoupled from the model)
 # ---------------------------------------------------------------------------
-
 AMAZON_URL_RE = re.compile(r"^https?://(www\.)?amazon\.(in|com|co\.uk|de|ca)/", re.I)
 
 
@@ -215,6 +217,9 @@ def render_result(result: dict, product_name: str | None, product_id: str | None
     for r in result.get("reasons", []):
         st.write(f"- {r}")
 
+    # --- Pricing Precaution / Pricing Context ---
+    render_pricing_precaution(result, ref)
+
     # --- Visualizations ---
     if mode == "historical" and product_id:
         render_historical_chart(product_id, result["current_price"])
@@ -224,6 +229,58 @@ def render_result(result: dict, product_name: str | None, product_id: str | None
     # --- Disclaimer ---
     st.markdown("---")
     st.caption(DISCLAIMER)
+
+
+def render_pricing_precaution(result: dict, ref: dict):
+    """Explains that an unusual score is not automatically bad/overpriced/
+    fraudulent/low-quality. Uses ONLY the score and reference values that
+    predict_product() already returned -- no new scoring or logic here.
+
+    Reference median used for direction:
+      - Historical mode -> reference_values['historical_median']
+      - Market mode     -> reference_values['category_median']
+    If neither is present (shouldn't normally happen, but handled
+    defensively), the section is skipped rather than guessing or crashing.
+    """
+    score = result["anomaly_score"]
+    current_price = result["current_price"]
+
+    reference_median = ref.get("historical_median")
+    if reference_median is None:
+        reference_median = ref.get("category_median")
+    if reference_median is None:
+        return  # no reliable reference to compare against -- don't guess
+
+    st.markdown("---")
+
+    if score >= 0.50 and current_price > reference_median:
+        st.markdown("### \u26A0\uFE0F Pricing Precaution")
+        st.info(
+            "This price is unusually high compared with the available pricing data. "
+            "This does not necessarily mean the product is overpriced. Premium brands, "
+            "newer models, additional features, specifications, warranty, or other "
+            "product differences can legitimately result in higher prices. Verify the "
+            "product specifications, seller information, warranty, and included "
+            "features before making a decision."
+        )
+    elif score >= 0.50 and current_price < reference_median:
+        st.markdown("### \u26A0\uFE0F Pricing Precaution")
+        st.info(
+            "This price is unusually low compared with the available pricing data. "
+            "This does not necessarily mean the product is better value or that its "
+            "quality is lower. Discounts, clearance sales, refurbished products, "
+            "different sellers, warranty, product condition, or included features can "
+            "affect the price. Verify these details before purchasing."
+        )
+    else:
+        # Covers score < 0.50, and the rare edge case where score >= 0.50 but
+        # current_price == reference_median exactly (direction undetermined).
+        st.markdown("### Pricing Context")
+        st.info(
+            "This price is within the typical range observed by the model. This does "
+            "not guarantee that it is the best available price, so users should still "
+            "compare specifications and seller details."
+        )
 
 
 def render_historical_chart(product_id: str, current_price: float):
@@ -400,7 +457,7 @@ tab_amazon, tab_manual = st.tabs(["Amazon Product", "Manual Input"])
 
 # --- TAB 1: Amazon Product -------------------------------------------------
 with tab_amazon:
-    st.write("Paste an Amazon product URL to analyze its pricing. (this feature isnt working right now use manual input)")
+    st.write("Paste an Amazon product URL to analyze its pricing.")
     amazon_url = st.text_input("Amazon product URL", key="amazon_url_input")
     analyze_amazon = st.button("Analyze", key="analyze_amazon_btn")
 
