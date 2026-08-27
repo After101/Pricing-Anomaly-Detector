@@ -1,15 +1,12 @@
 """
-Pricing Anomaly Detector -- Streamlit UI.
+Pricing Anomaly Detector  Streamlit UI.
 
-This file is PRESENTATION ONLY. It never trains, retrains, or re-derives
+This file is for presentation only. It never trains, retrains, or re-derives
 any scoring logic. All inference goes through the existing, already-trained
 pipeline:
 
     ml.predict.predict_product(product_data) -> structured result dict
 
-Run from the project root with:
-
-    streamlit run app.py
 """
 
 from __future__ import annotations
@@ -27,9 +24,9 @@ import streamlit as st
 from ml import config
 from ml.predict import predict_product, InvalidProductInputError, ArtifactsNotFoundError
 
-# ---------------------------------------------------------------------------
+
 # Page setup
-# ---------------------------------------------------------------------------
+
 st.set_page_config(
     page_title="Pricing Anomaly Detector",
     page_icon="\U0001F4CA",
@@ -46,9 +43,9 @@ KNOWN_SUBCATEGORIES = ["Wireless Earphones / TWS", "Headphones", "Earphones"]
 PLATFORMS = ["Amazon", "Flipkart", "Other"]
 
 
-# ---------------------------------------------------------------------------
+
 # Cached loaders (read-only access to existing artifacts -- no training)
-# ---------------------------------------------------------------------------
+
 @st.cache_data(show_spinner=False)
 def load_product_history() -> dict:
     if not config.PRODUCT_HISTORY_PATH.exists():
@@ -76,9 +73,9 @@ def artifacts_available() -> bool:
     return all(p.exists() for p in required)
 
 
-# ---------------------------------------------------------------------------
+
 # Safe wrapper around predict_product -- the ONLY place errors are caught
-# ---------------------------------------------------------------------------
+
 def run_prediction(product_data: dict):
     """Returns (result_dict, error_message) -- exactly one is None."""
     try:
@@ -92,9 +89,10 @@ def run_prediction(product_data: dict):
         return None, "Something went wrong while analyzing this product. Please check your inputs and try again."
 
 
-# ---------------------------------------------------------------------------
+
 # Amazon URL handling (scraper intentionally decoupled from the model)
 # ---------------------------------------------------------------------------
+
 AMAZON_URL_RE = re.compile(r"^https?://(www\.)?amazon\.(in|com|co\.uk|de|ca)/", re.I)
 
 
@@ -402,7 +400,7 @@ tab_amazon, tab_manual = st.tabs(["Amazon Product", "Manual Input"])
 
 # --- TAB 1: Amazon Product -------------------------------------------------
 with tab_amazon:
-    st.write("Paste an Amazon product URL to analyze its pricing.")
+    st.write("Paste an Amazon product URL to analyze its pricing. (this feature isnt working right now use manual input)")
     amazon_url = st.text_input("Amazon product URL", key="amazon_url_input")
     analyze_amazon = st.button("Analyze", key="analyze_amazon_btn")
 
