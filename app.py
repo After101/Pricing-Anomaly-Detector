@@ -90,13 +90,7 @@ AMAZON_URL_RE = re.compile(r"^https?://(www\.)?amazon\.(in|com|co\.uk|de|ca)/", 
 
 
 def try_scrape_amazon(url: str):
-    """Looks for a real Amazon scraper in the project. None is bundled with
-    this project (only a PriceDiff historical-checkpoint scraper exists,
-    which talks to pricediff.in, not Amazon), so this always reports
-    unavailable rather than fabricating scraped data. If a real scraper
-    module is added later (e.g. ml/amazon_scraper.py exposing
-    scrape_amazon_product(url) -> dict), wiring it in here is the only
-    change needed -- the rest of the app is unaffected.
+    """not working yet WIP
     """
     try:
         from ml.amazon_scraper import scrape_amazon_product  # type: ignore
