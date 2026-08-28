@@ -1,15 +1,6 @@
 """
-Pricing Anomaly Detector -- Streamlit UI.
+Pricing Anomaly Detector with Streamlit UI.
 
-This file is PRESENTATION ONLY. It never trains, retrains, or re-derives
-any scoring logic. All inference goes through the existing, already-trained
-pipeline:
-
-    ml.predict.predict_product(product_data) -> structured result dict
-
-Run from the project root with:
-
-    streamlit run app.py
 """
 
 from __future__ import annotations
