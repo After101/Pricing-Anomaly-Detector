@@ -1,7 +1,7 @@
 """
 Per-mode model bundle: StandardScaler + IsolationForest + ScoreCalibrator.
 
-MODE 1 and MODE 2 use structurally different feature sets (product-history
+MODE 1 and MODE 2 use structurally different feature sets (history
 statistics vs. category/brand statistics), so they are two separate
 Isolation Forest models rather than one model with padded/fabricated
 features for whichever mode doesn't apply to a given row. This avoids
